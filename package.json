@@ -1,0 +1,19 @@
+{
+  "name": "mobile-agent-orchestrator",
+  "version": "0.1.0",
+  "description": "A guided Pi skill for safely setting up a persistent mobile AI-agent environment.",
+  "license": "Apache-2.0",
+  "private": false,
+  "keywords": [
+    "pi-package",
+    "pi-skill",
+    "mobile-agent",
+    "tailscale",
+    "mosh"
+  ],
+  "pi": {
+    "skills": [
+      "./skills"
+    ]
+  }
+}
