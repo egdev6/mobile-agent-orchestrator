@@ -11,13 +11,15 @@
     <a href="https://github.com/egdev6/mobile-agent-orchestrator/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/egdev6/mobile-agent-orchestrator/ci.yml?branch=main&amp;label=package%20CI&amp;style=for-the-badge" alt="Package CI"></a>
     <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="MIT License"></a>
     <a href="https://pi.dev"><img src="https://img.shields.io/badge/Pi-package-7c3aed?style=for-the-badge" alt="Pi package"></a>
-    <img src="https://img.shields.io/badge/status-draft-orange?style=for-the-badge" alt="Draft status">
+    <img src="https://img.shields.io/badge/status-v0.1.0-brightgreen?style=for-the-badge" alt="Stable v0.1.0 status">
   </p>
 </div>
 
 ---
 
-> **Status: draft.** Version `0.1.0-dev.0` has no stable Git tag, npm publication, completed cold-boot evidence, or live operational-verification claim. Review the source before installation: a Pi skill can guide system and network changes.
+> **Status: stable v0.1.0.** Git tags—not npm publication—are the distribution channel. Review the source before installation: a Pi skill can guide system and network changes.
+>
+> **Operational-evidence caveat.** Independently recorded cold-boot and live runtime evidence is not published for v0.1.0. Validate lifecycle and recovery on your target; this release does not claim observed macOS, WSL2, reboot, or mobile-client behavior.
 
 <details>
   <summary>Table of Contents</summary>
@@ -53,7 +55,7 @@
 
 | Requirement | Why it matters |
 | --- | --- |
-| A reviewed local checkout and a working [Pi Coding Agent][pi] installation | Pi packages and skills can instruct an agent to make system changes. |
+| A working [Pi Coding Agent][pi] installation | Pi packages and skills can instruct an agent to make system changes. Review the source if you need to assess its system-change guidance. |
 | **macOS native** | Supported native lifecycle and execution target. |
 | **Windows 11 with WSL2** | Supported split model: Windows owns startup; the selected WSL distribution runs Linux services and agents. |
 | Windows native without WSL2 | **Unsupported.** Stop and install WSL2 before using this workflow. |
@@ -64,7 +66,15 @@ The guided workflow discovers its runtime state before proposing changes. It ins
 
 ## Installation
 
-### Safe draft path: install from a local checkout
+### Recommended: install stable v0.1.0 from Git
+
+```bash
+pi install git:github.com/egdev6/mobile-agent-orchestrator@v0.1.0
+```
+
+Git tags—not npm publication—are this project's distribution channel. The release tag is created by automation after a validated release pull request merges; see the [release guide][release-guide] for the release conditions.
+
+### Source-review or development option: install from a local checkout
 
 1. Review this repository, especially the [skill][skill] and its on-demand references.
 2. Install the reviewed local package:
@@ -74,16 +84,6 @@ The guided workflow discovers its runtime state before proposing changes. It ins
    ```
 
 3. Start Pi from your normal working directory.
-
-### Future stable Git path
-
-> **Available only after a stable Git tag exists.** This draft has no stable tag today.
-
-```bash
-pi install git:github.com/egdev6/mobile-agent-orchestrator@vX.Y.Z
-```
-
-Replace `vX.Y.Z` with the published stable tag. Git tags—not npm publication—are this project's intended distribution channel. See the [release guide][release-guide] for the release conditions.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -168,7 +168,7 @@ Tailscale, OpenSSH, Mosh, Moshi, `moshi-hook`, Herdr, tmux, and platform lifecyc
 
 After each approved mutation, the workflow captures non-sensitive evidence for the private overlay, key-authenticated SSH, Mosh reconnection, session host, checkpoints, integrations, and notifications. A missing component or failed check is a finding—not authorization to make another change.
 
-Before an approved reboot, the guide states that live processes will die, confirms recovery and rollback paths, then checks the actual post-reboot state. Herdr and tmux do not preserve live processes across a physical reboot; supported Pi JSONL sessions may resume from local disk. Cold-boot behavior remains pending human-observed evidence in this draft.
+Before an approved reboot, the guide states that live processes will die, confirms recovery and rollback paths, then checks the actual post-reboot state. Herdr and tmux do not preserve live processes across a physical reboot; supported Pi JSONL sessions may resume from local disk. Independently recorded cold-boot and live runtime evidence is not published for v0.1.0, so validate lifecycle and recovery on your target.
 
 Read the full [verification and recovery guide][verification-recovery] before applying lifecycle or rollback changes.
 

@@ -4,7 +4,7 @@ description: "Trigger: mobile agent setup, mobile orchestrator, Moshi, Mosh, Tai
 license: MIT
 metadata:
   author: egdev6
-  version: "0.1.0-dev.0"
+  version: "0.1.0"
 ---
 
 ## Activation Contract
@@ -34,7 +34,7 @@ Ask one question only when detection leaves a real decision or authorization. Ob
 3. Install and verify OpenSSH, Tailscale, mobile clients, Moshi, `moshi-hook`, Mosh, and Herdr or tmux using the guided reference.
 4. Test key authentication before optional strict SSH hardening; keep Tailscale SSH off.
 5. Configure the approved lifecycle path, privacy level, integrations, notifications, and Pi JSONL checkpoint/resume procedure.
-6. Run disconnect and approved reboot recovery verification. Mark cold-boot behavior pending evidence in this draft.
+6. Run disconnect and approved reboot recovery verification. Mark cold-boot behavior as pending whenever observed evidence is unavailable.
 
 ## Output Contract
 
