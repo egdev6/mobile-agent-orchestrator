@@ -425,7 +425,9 @@ function validatePackage() {
       fail(`Stable version ${packageJson.version} requires a matching CHANGELOG.md heading.`);
     }
     if (/\*\*Status:\s*draft\.\*\*/i.test(readme)) fail("Stable versions must remove the README draft marker.");
-    if (/<owner>|<tag>/.test(readme)) fail("Stable versions must replace README <owner> and <tag> placeholders.");
+    if (/vX\.Y\.Z|<owner>|<tag>/.test(readme)) {
+      fail("Stable versions must replace README vX.Y.Z, <owner>, and <tag> installation placeholders.");
+    }
   }
 
   if (packageJson) validateTarball(packageJson.name, fail);

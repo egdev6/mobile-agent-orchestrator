@@ -7,7 +7,7 @@ GitHub tags are this project's distribution channel. npm publication is out of s
 1. Open a dedicated release PR. Ordinary merges to `main` never create a tag.
 2. Update `package.json` and `skills/mobile-agent-orchestrator/SKILL.md` to the same stable version.
 3. Add a matching stable-version heading and release notes to `CHANGELOG.md`.
-4. Remove the README draft marker and replace the `<owner>` and `<tag>` placeholders.
+4. Remove the README draft marker and replace the `vX.Y.Z` future-install placeholder with the published stable tag. The validator also rejects legacy `<owner>` and `<tag>` placeholders.
 5. Run `npm test`, review the release PR, and merge it into `main`.
 
 After the merge, the workflow uses GitHub's pull-request association API to prove that `GITHUB_SHA` belongs to a merged pull request targeting `main`. It then validates the merged revision, confirms that `package.json` has a real stable-version change from the pushed base, and creates one annotated tag object and its immutable `vX.Y.Z` ref through the GitHub API.

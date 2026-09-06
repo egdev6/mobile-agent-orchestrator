@@ -16,7 +16,7 @@ A release PR must update all of the following together:
 - `skills/mobile-agent-orchestrator/SKILL.md` metadata version
 - `CHANGELOG.md` with the stable version heading and release notes
 
-Stable releases must remove the README draft marker and replace its `<owner>` and `<tag>` installation placeholders. The package validator enforces these rules.
+Stable releases must remove the README draft marker and replace its `vX.Y.Z` future-install placeholder with the published stable tag. The package validator also rejects legacy `<owner>` and `<tag>` placeholders.
 
 ## Scope
 
