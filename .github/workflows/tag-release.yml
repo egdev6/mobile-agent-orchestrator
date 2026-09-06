@@ -1,0 +1,210 @@
+name: Tag release
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: release-main
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    name: Validate release candidate
+    runs-on: ubuntu-latest
+    outputs:
+      should_tag: ${{ steps.release.outputs.should_tag }}
+      version: ${{ steps.release.outputs.version }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+      - run: npm test
+      - name: Verify merged pull request provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          pulls_json="$(gh api --method GET --paginate --slurp \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/pulls?per_page=100")" || {
+            echo "Could not verify pull request provenance for $GITHUB_SHA." >&2
+            exit 1
+          }
+          printf '%s' "$pulls_json" | GITHUB_SHA="$GITHUB_SHA" node -e '
+            let input = "";
+            process.stdin.on("data", (chunk) => input += chunk).on("end", () => {
+              const pages = JSON.parse(input);
+              if (!Array.isArray(pages) || pages.some((page) => !Array.isArray(page))) {
+                throw new Error("pull request association API response is not paginated arrays");
+              }
+              const pulls = pages.flat();
+              const mergedMainPull = pulls.find((pull) =>
+                pull?.base?.ref === "main" &&
+                pull.state === "closed" &&
+                typeof pull.merged_at === "string" &&
+                pull.merged_at.length > 0,
+              );
+              if (!mergedMainPull) {
+                throw new Error(`commit ${process.env.GITHUB_SHA} is not associated with a merged pull request targeting main`);
+              }
+            });' || {
+            echo "Refusing to tag without proven merged pull request provenance." >&2
+            exit 1
+          }
+      - id: release
+        name: Detect a stable version change
+        env:
+          BEFORE: ${{ github.event.before }}
+        run: |
+          set -euo pipefail
+          printf 'should_tag=false\n' >> "$GITHUB_OUTPUT"
+
+          if [[ "$BEFORE" =~ ^0{40}$ ]]; then
+            echo "Initial push has no comparable base; refusing to tag."
+            exit 0
+          fi
+          if ! git cat-file -e "$BEFORE^{commit}"; then
+            echo "Push base is unavailable; refusing to tag." >&2
+            exit 1
+          fi
+          if ! git merge-base --is-ancestor "$BEFORE" "$GITHUB_SHA"; then
+            echo "Push base is not an ancestor of the merged SHA; refusing to tag." >&2
+            exit 1
+          fi
+          if git diff --quiet "$BEFORE" "$GITHUB_SHA" -- package.json; then
+            echo "package.json did not change; this is an ordinary merge."
+            exit 0
+          fi
+
+          base_package="$(git show "$BEFORE:package.json")" || {
+            echo "The push base has no readable package.json; refusing to tag." >&2
+            exit 1
+          }
+          base_version="$(printf '%s' "$base_package" | node -e 'let source = ""; process.stdin.on("data", (chunk) => source += chunk).on("end", () => console.log(JSON.parse(source).version));')"
+          version="$(node -p 'require("./package.json").version')"
+          if [[ "$version" == *-* ]]; then
+            echo "Prerelease version $version is not taggable."
+            exit 0
+          fi
+          node scripts/validate-package.mjs --release-transition "$base_version" "$version"
+
+          printf 'should_tag=true\nversion=%s\n' "$version" >> "$GITHUB_OUTPUT"
+
+  tag:
+    name: Create release tag
+    needs: validate
+    if: needs.validate.outputs.should_tag == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Create immutable annotated tag
+        env:
+          VERSION: ${{ needs.validate.outputs.version }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="v$VERSION"
+          existing_refs_json="$(gh api --method GET \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "repos/$GITHUB_REPOSITORY/git/matching-refs/tags/$tag")" || {
+            echo "Could not determine whether tag $tag exists." >&2
+            exit 1
+          }
+          existing_tag_object_sha="$(printf '%s' "$existing_refs_json" | TAG="$tag" node -e '
+            let input = "";
+            process.stdin.on("data", (chunk) => input += chunk).on("end", () => {
+              const refs = JSON.parse(input);
+              if (!Array.isArray(refs)) throw new Error("matching refs API response is not an array");
+              const matches = refs.filter((ref) => ref?.ref === `refs/tags/${process.env.TAG}`);
+              if (matches.length > 1) throw new Error("matching refs API response has duplicate exact tag refs");
+              if (matches.length === 0) return;
+              const object = matches[0].object;
+              if (object?.type !== "tag" || typeof object.sha !== "string" || !/^[0-9a-f]{40}$/i.test(object.sha)) {
+                throw new Error("existing tag ref does not target an annotated tag object");
+              }
+              console.log(object.sha);
+            });')" || {
+            echo "Existing tag lookup was invalid or ambiguous." >&2
+            exit 1
+          }
+          if [[ -n "$existing_tag_object_sha" ]]; then
+            existing_tag_json="$(gh api --method GET \
+              -H "Accept: application/vnd.github+json" \
+              -H "X-GitHub-Api-Version: 2022-11-28" \
+              "repos/$GITHUB_REPOSITORY/git/tags/$existing_tag_object_sha")" || {
+                echo "Could not inspect existing annotated tag object for $tag." >&2
+                exit 1
+              }
+            printf '%s' "$existing_tag_json" | TAG="$tag" GITHUB_SHA="$GITHUB_SHA" node -e '
+              let input = "";
+              process.stdin.on("data", (chunk) => input += chunk).on("end", () => {
+                const tagObject = JSON.parse(input);
+                if (tagObject.tag !== process.env.TAG || tagObject.object?.type !== "commit" || tagObject.object?.sha !== process.env.GITHUB_SHA) {
+                  throw new Error("existing annotated tag does not peel to the merged commit");
+                }
+              });' || {
+              echo "Refusing existing tag $tag because it is not the expected annotated tag at $GITHUB_SHA." >&2
+              exit 1
+            }
+            echo "Tag $tag already exists as an annotated tag at the merged SHA; rerun is a no-op."
+            exit 0
+          fi
+
+          tag_object_json="$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/tags" \
+            -f tag="$tag" \
+            -f message="Release $tag" \
+            -f object="$GITHUB_SHA" \
+            -f type=commit)" || {
+            echo "Could not create annotated tag object for $tag." >&2
+            exit 1
+          }
+          tag_object_sha="$(printf '%s' "$tag_object_json" | TAG="$tag" node -e '
+            let input = "";
+            process.stdin.on("data", (chunk) => input += chunk).on("end", () => {
+              const tagObject = JSON.parse(input);
+              if (typeof tagObject.sha !== "string" || !/^[0-9a-f]{40}$/i.test(tagObject.sha)) {
+                throw new Error("annotated tag API response has no unambiguous SHA");
+              }
+              if (tagObject.tag !== process.env.TAG || tagObject.object?.type !== "commit" || tagObject.object?.sha !== process.env.GITHUB_SHA) {
+                throw new Error("annotated tag API response does not match the requested tag and commit");
+              }
+              console.log(tagObject.sha);
+            });')" || {
+            echo "Annotated tag API response was invalid or ambiguous." >&2
+            exit 1
+          }
+          ref_json="$(gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
+            -f ref="refs/tags/$tag" \
+            -f sha="$tag_object_sha")" || {
+            echo "Could not create ref refs/tags/$tag." >&2
+            exit 1
+          }
+          printf '%s' "$ref_json" | TAG="$tag" TAG_OBJECT_SHA="$tag_object_sha" node -e '
+            let input = "";
+            process.stdin.on("data", (chunk) => input += chunk).on("end", () => {
+              const ref = JSON.parse(input);
+              if (ref.ref !== `refs/tags/${process.env.TAG}` || ref.object?.type !== "tag" || ref.object?.sha !== process.env.TAG_OBJECT_SHA) {
+                throw new Error("tag ref API response does not match the requested annotated tag object");
+              }
+            });' || {
+            echo "Tag ref API response was invalid or ambiguous." >&2
+            exit 1
+          }
