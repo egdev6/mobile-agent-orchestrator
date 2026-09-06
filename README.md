@@ -5,6 +5,8 @@
     <h1>Mobile Agent Orchestrator</h1>
   </a>
 
+  <img width="3469" height="1198" alt="moshi" src="https://github.com/user-attachments/assets/aa5ed0b7-bd0c-4612-a3fd-58876c4eccab" />
+
   <p>A guided Pi skill for a private, recoverable mobile AI-agent environment.</p>
 
   <p>
