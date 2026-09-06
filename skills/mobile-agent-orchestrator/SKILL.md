@@ -4,7 +4,7 @@ description: "Trigger: mobile agent setup, mobile orchestrator, Moshi, Mosh, Tai
 license: Apache-2.0
 metadata:
   author: egdev6
-  version: "0.1.0"
+  version: "0.1.0-dev.0"
 ---
 
 ## Activation Contract

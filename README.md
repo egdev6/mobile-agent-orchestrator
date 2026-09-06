@@ -32,6 +32,14 @@ Never put private keys, pairing tokens, sign-in URLs, QR contents, or credential
 - Moshi, `moshi-hook`, Mosh, Herdr or tmux, selected integrations, notifications, and checkpoints.
 - Windows WSL boot keepalive plus systemd linger, macOS lifecycle evidence, and disconnect/reboot recovery checks.
 
+## Maintainer documentation
+
+- [Contributing](CONTRIBUTING.md)
+- [Release guide](docs/RELEASE.md)
+- [Security policy](SECURITY.md)
+
+The package remains a draft prerelease. These documents define the intended validation and release process; they do not claim completed operational validation or published tags.
+
 ## License
 
 Apache-2.0. See [LICENSE](LICENSE).

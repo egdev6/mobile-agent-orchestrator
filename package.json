@@ -1,9 +1,26 @@
 {
   "name": "mobile-agent-orchestrator",
-  "version": "0.1.0",
+  "version": "0.1.0-dev.0",
   "description": "A guided Pi skill for safely setting up a persistent mobile AI-agent environment.",
   "license": "Apache-2.0",
   "private": false,
+  "author": "egdev6",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/egdev6/mobile-agent-orchestrator.git"
+  },
+  "homepage": "https://github.com/egdev6/mobile-agent-orchestrator",
+  "bugs": {
+    "url": "https://github.com/egdev6/mobile-agent-orchestrator/issues"
+  },
+  "files": [
+    "skills/"
+  ],
+  "scripts": {
+    "validate": "node scripts/validate-package.mjs",
+    "pack:check": "npm pack --dry-run --json",
+    "test": "npm run validate"
+  },
   "keywords": [
     "pi-package",
     "pi-skill",
