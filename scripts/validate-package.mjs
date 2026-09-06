@@ -360,7 +360,7 @@ function validatePackage() {
     const version = parseSemVer(packageJson.version);
     if (packageJson.name !== "mobile-agent-orchestrator") fail("package.json name must be mobile-agent-orchestrator.");
     if (typeof packageJson.description !== "string" || !packageJson.description.trim()) fail("package.json must include a non-empty description.");
-    if (packageJson.license !== "Apache-2.0") fail("package.json license must be Apache-2.0.");
+    if (packageJson.license !== "MIT") fail("package.json license must be MIT.");
     if (!version) fail(`package.json version must be valid SemVer; received ${JSON.stringify(packageJson.version)}.`);
     if (version && version.prerelease.length === 0 && version.build.length > 0) {
       fail("Stable package versions must not contain build metadata.");
@@ -402,7 +402,7 @@ function validatePackage() {
       if (!frontmatter.description || frontmatter.description.length > 1024) {
         fail("SKILL.md description must be non-empty and at most 1024 characters.");
       }
-      if (frontmatter.license !== "Apache-2.0") fail("SKILL.md license must be Apache-2.0.");
+      if (frontmatter.license !== "MIT") fail("SKILL.md license must be MIT.");
       if (!frontmatter.metadata.author) fail("SKILL.md metadata.author must be non-empty.");
       if (packageJson && frontmatter.metadata.version !== packageJson.version) {
         fail(`SKILL.md metadata.version (${frontmatter.metadata.version}) must equal package.json version (${packageJson.version}).`);

@@ -42,4 +42,4 @@ The package remains a draft prerelease. These documents define the intended vali
 
 ## License
 
-Apache-2.0. See [LICENSE](LICENSE).
+MIT. See [LICENSE](LICENSE).
