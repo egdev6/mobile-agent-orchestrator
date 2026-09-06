@@ -1,10 +1,10 @@
 ---
 name: mobile-agent-orchestrator
 description: "Trigger: mobile agent setup, mobile orchestrator, Moshi, Mosh, Tailscale, remote Pi. Guide a human through a safe persistent mobile AI-agent installation."
-license: Apache-2.0
+license: MIT
 metadata:
   author: egdev6
-  version: "0.1.0"
+  version: "0.1.0-dev.0"
 ---
 
 ## Activation Contract
