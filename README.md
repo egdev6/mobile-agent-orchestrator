@@ -22,6 +22,8 @@
 > **Status: stable v0.1.0.** Git tags—not npm publication—are the distribution channel. Review the source before installation: a Pi skill can guide system and network changes.
 >
 > **Operational-evidence caveat.** Independently recorded cold-boot and live runtime evidence is not published for v0.1.0. Validate lifecycle and recovery on your target; this release does not claim observed macOS, WSL2, reboot, or mobile-client behavior.
+>
+> **BASED ON** https://www.youtube.com/watch?v=Yj51wXMwFwE&t=907s
 
 <details>
   <summary>Table of Contents</summary>
