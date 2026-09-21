@@ -97,9 +97,15 @@ jobs:
             echo "Prerelease version $version is not taggable."
             exit 0
           fi
-          node scripts/validate-package.mjs --release-transition "$base_version" "$version"
-
-          printf 'should_tag=true\nversion=%s\n' "$version" >> "$GITHUB_OUTPUT"
+          if ! release_output="$(node scripts/detect-release.mjs "$base_version" "$version")"; then
+            echo "Release detection failed; refusing to tag." >&2
+            exit 1
+          fi
+          if [[ "$release_output" == "should_tag=false" ]]; then
+            echo "Package version is unchanged; this is an ordinary merge."
+            exit 0
+          fi
+          printf '%s\n' "$release_output" >> "$GITHUB_OUTPUT"
 
   tag:
     name: Create release tag
