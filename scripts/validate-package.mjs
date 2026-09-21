@@ -242,7 +242,13 @@ export function discoverPackageInventory(packageRoot = root, readDirectory = rea
       `Package must contain exactly one canonical SKILL.md at ${canonicalSkillPath}; found ${skillManifests.length === 0 ? "none" : skillManifests.join(", ")}.`,
     );
   }
-  return [...publishedTopLevelPaths.filter((path) => !path.endsWith("/")), ...skillFiles];
+  return publishedTopLevelPaths.flatMap((path) => {
+    if (!path.endsWith("/")) return [path];
+    if (path === "skills/") return skillFiles;
+    return walk(resolve(packageRoot, path), () => true, readDirectory)
+      .map((filePath) => toPackagePath(relative(packageRoot, filePath)))
+      .sort();
+  });
 }
 
 export function validatePublishedInventory(actualFiles, expectedFiles) {
