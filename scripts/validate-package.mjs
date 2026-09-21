@@ -6,6 +6,9 @@ import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+export const canonicalSkillRoot = "skills/mobile-agent-orchestrator/";
+export const canonicalSkillPath = "skills/mobile-agent-orchestrator/SKILL.md";
+export const publishedTopLevelPaths = ["LICENSE", "README.md", "package.json", "skills/"];
 const semverPattern = /^(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*)(?:\.(?:0|[1-9]\d*|\d*[A-Za-z-][0-9A-Za-z-]*))*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
 const requiredSections = [
   "Activation Contract",
@@ -149,7 +152,7 @@ export function parseSkillFrontmatter(skill) {
   return { frontmatter, body: lines.slice(closingIndex + 1) };
 }
 
-function parseYamlScalar(value, lineNumber) {
+export function parseYamlScalar(value, lineNumber) {
   if (value.startsWith('"')) {
     try {
       const parsed = JSON.parse(value);
@@ -212,15 +215,44 @@ export function decodeLocalDestination(destination) {
   }
 }
 
-function walk(directory, predicate) {
+function walk(directory, predicate, readDirectory = readdirSync) {
   const results = [];
-  for (const entry of readdirSync(directory, { withFileTypes: true })) {
+  for (const entry of readDirectory(directory, { withFileTypes: true })) {
     if ([".git", "node_modules", ".codegraph"].includes(entry.name)) continue;
     const path = resolve(directory, entry.name);
-    if (entry.isDirectory()) results.push(...walk(path, predicate));
+    if (entry.isDirectory()) results.push(...walk(path, predicate, readDirectory));
     else if (predicate(path)) results.push(path);
   }
   return results;
+}
+
+function toPackagePath(path) {
+  return path.replaceAll(sep, "/");
+}
+
+export function discoverPackageInventory(packageRoot = root, readDirectory = readdirSync) {
+  const skillFiles = walk(
+    resolve(packageRoot, canonicalSkillRoot),
+    () => true,
+    readDirectory,
+  ).map((path) => toPackagePath(relative(packageRoot, path))).sort();
+  const skillManifests = skillFiles.filter((path) => path.endsWith("/SKILL.md") || path === "SKILL.md");
+  if (skillManifests.length !== 1 || skillManifests[0] !== canonicalSkillPath) {
+    throw new Error(
+      `Package must contain exactly one canonical SKILL.md at ${canonicalSkillPath}; found ${skillManifests.length === 0 ? "none" : skillManifests.join(", ")}.`,
+    );
+  }
+  return publishedTopLevelPaths.flatMap((path) => {
+    if (!path.endsWith("/")) return [path];
+    if (path === "skills/") return skillFiles;
+    return walk(resolve(packageRoot, path), () => true, readDirectory)
+      .map((filePath) => toPackagePath(relative(packageRoot, filePath)))
+      .sort();
+  });
+}
+
+export function validatePublishedInventory(actualFiles, expectedFiles) {
+  return compareTarballFiles(actualFiles, expectedFiles);
 }
 
 function validateLocalTarget(markdownPath, destination, fail) {
@@ -328,23 +360,18 @@ function validateTarball(packageName, fail) {
   const packedFiles = runNpmPack(packageName, fail);
   if (packedFiles.length === 0) return;
 
-  const expectedFiles = [
-    "LICENSE",
-    "README.md",
-    "package.json",
-    "skills/mobile-agent-orchestrator/SKILL.md",
-    "skills/mobile-agent-orchestrator/references/guided-install.md",
-    "skills/mobile-agent-orchestrator/references/platform-matrix.md",
-    "skills/mobile-agent-orchestrator/references/verification-and-recovery.md",
-  ];
-  for (const error of compareTarballFiles(packedFiles, expectedFiles)) fail(error);
+  try {
+    for (const error of validatePublishedInventory(packedFiles, discoverPackageInventory())) fail(error);
+  } catch (error) {
+    fail(error.message);
+  }
 }
 
 function validatePackage() {
   const errors = [];
   const fail = (message) => errors.push(message);
   const packagePath = resolve(root, "package.json");
-  const skillPath = resolve(root, "skills/mobile-agent-orchestrator/SKILL.md");
+  const skillPath = resolve(root, canonicalSkillPath);
   const changelogPath = resolve(root, "CHANGELOG.md");
   const readmePath = resolve(root, "README.md");
   let packageJson = null;
@@ -390,6 +417,12 @@ function validatePackage() {
         }
       }
     }
+  }
+
+  try {
+    discoverPackageInventory();
+  } catch (error) {
+    fail(error.message);
   }
 
   if (existsSync(skillPath)) {

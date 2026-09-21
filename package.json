@@ -19,7 +19,7 @@
   "scripts": {
     "validate": "node scripts/validate-package.mjs",
     "pack:check": "npm pack --dry-run --json",
-    "test": "npm run validate"
+    "test": "npm run validate && node --test"
   },
   "keywords": [
     "pi-package",
