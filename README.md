@@ -45,13 +45,9 @@
 
 ## Built With
 
-<div align="center">
-  <a href="https://pi.dev"><img src="https://img.shields.io/badge/Pi-Coding%20Agent-7c3aed" alt="Pi Coding Agent"></a>
-  <a href="https://agentskills.io"><img src="https://img.shields.io/badge/Agent%20Skills-compatible-0f766e" alt="Agent Skills"></a>
-  <a href="https://nodejs.org"><img src="https://img.shields.io/badge/Node.js-ESM-339933" alt="Node.js ESM"></a>
-  <a href="https://www.npmjs.com"><img src="https://img.shields.io/badge/npm-package%20validation-CB3837" alt="npm"></a>
-  <a href="https://github.com/features/actions"><img src="https://img.shields.io/badge/GitHub-Actions-2088FF" alt="GitHub Actions"></a>
-</div>
+<a href="https://github.com/Gentleman-Programming/gentle-ai">
+  <img width="220" src="https://raw.githubusercontent.com/Gentleman-Programming/gentle-ai/main/docs/assets/brand/built-with-gentle-ai.png" alt="Built with Gentle-AI" />
+</a>
 
 ---
 
